@@ -1,0 +1,89 @@
+{
+  "updatedAt": "2026-10-04",
+  "currency": "SGD, 含 9% GST",
+  "parks": [
+    {"id":"rwa","name":"雨林探险园","en":"Rainforest Wild Adventure","night":false,"note":"东西两区一票通",
+     "reg":{"a":45,"c":32,"s":32,"sr":25},"peak":{"a":50,"c":35,"s":35,"sr":25},"std":{"a":55,"c":39}},
+    {"id":"zoo","name":"新加坡动物园","en":"Singapore Zoo","night":false,
+     "reg":{"a":39,"c":27,"s":27,"sr":25},"peak":{"a":44,"c":30,"s":30,"sr":25},"std":{"a":49,"c":34}},
+    {"id":"ns","name":"夜间动物园","en":"Night Safari","night":true,"note":"晚上开放，可接白天园",
+     "reg":{"a":48,"c":32,"s":32,"sr":25},"peak":{"a":52,"c":36,"s":36,"sr":25},"std":{"a":58,"c":41}},
+    {"id":"bp","name":"飞禽公园","en":"Bird Paradise","night":false,
+     "reg":{"a":39,"c":27,"s":27,"sr":25},"peak":{"a":44,"c":30,"s":30,"sr":25},"std":{"a":49,"c":34}},
+    {"id":"rw","name":"河川生态园","en":"River Wonders","night":false,"note":"亚马逊游船另付",
+     "reg":{"a":35,"c":26,"s":26,"sr":25},"peak":{"a":40,"c":29,"s":29,"sr":25},"std":{"a":45,"c":33}},
+    {"id":"exp","name":"Exploria 室内馆","en":"Exploria","night":false,
+     "reg":{"a":34,"c":25,"s":25,"sr":25},"peak":{"a":36,"c":26,"s":26,"sr":25},"std":{"a":38,"c":28}}
+  ],
+
+  "cards": [
+    {"id":"posb","kind":"partner","name":"POSB Everyday 卡","pct":0.5,"days":"noPH","parks":"all","from":"2026-01-01","to":"2026-12-31","code":"POSBPED",
+     "url":"https://posbeverydaycard-online.globaltix.com/fencing","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/posb-everyday-card-terms-and-conditions.pdf"},
+    {"id":"pdebit","kind":"partner","name":"PAssion POSB 借记卡","pct":0.5,"days":"noPH","parks":"all","from":"2026-01-01","to":"2026-12-31","code":"PADEBIT",
+     "url":"https://passionposbdebitcard-online.globaltix.com/fencing","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/passion-posb-debit-card-terms-and-conditions.pdf"},
+    {"id":"trust","kind":"partner","name":"Trust+ 卡","pct":0.5,"days":"noPH","parks":["rwa","zoo","ns","bp","rw"],"from":"2026-01-01","to":"2027-03-31","code":"Trust+ App 内领取","guess":true,
+     "url":"https://trustbank-online.globaltix.com/","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/trust-plus-terms-and-conditions.pdf"},
+    {"id":"jcb","kind":"partner","name":"JCB 卡","pct":0.3,"days":"monthu","parks":["rwa","zoo","ns","bp","rw"],"from":"2025-07-01","to":"2027-03-31","code":"JCB30","guess":true,
+     "url":"https://jcb-partnerpromos.globaltix.com/fencing","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/jcb-card-terms-and-conditions.pdf"},
+    {"id":"ntuc","kind":"partner","name":"NTUC 工会会员","pct":0.3,"days":"monthu","parks":"all","from":"2025-04-01","to":"2027-03-31","code":"NRIC 后 4 位登录","cap":4,
+     "url":"https://ntuc-online.globaltix.com","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/ntuc-union-terms-and-conditions.pdf"},
+    {"id":"safra","kind":"partner","name":"SAFRA 会员","pct":0.3,"days":"monthu","parks":"all","from":"2025-07-01","to":"2027-03-31","code":"SAFRA 网站领取","guess":true,
+     "url":"https://safra-online.globaltix.com/","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/safra-terms-and-conditions.pdf"},
+    {"id":"htns","kind":"partner","name":"HomeTeamNS 会员","pct":0.3,"days":"monthu","parks":["rwa","zoo","ns","bp","rw"],"from":"2025-06-01","to":"2027-03-31","code":"HomeTeamNS App","guess":true,
+     "url":"https://hometeamns-online.globaltix.com/","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/hometeamns-terms-and-conditions.pdf"},
+    {"id":"passion","kind":"partner","name":"PAssion 卡","pct":0.3,"days":"monthu","parks":"all","from":"2026-08-01","to":"2027-07-31","code":"PAssion 网站领取",
+     "url":"https://passioncard-online.globaltix.com/","tc":"https://www.mandai.com/content/dam/mandai/promotions/partners/passion-card-terms-and-conditions.pdf"},
+    {"id":"sia","kind":"sia","name":"新航 KrisFlyer 专享","pct":0.25,"days":"all","parks":["rwa","zoo","bp","rw"],"from":"2026-01-01","to":"2027-03-31",
+     "holder":"同行有人是 KrisFlyer 会员，且订了飞新加坡的新航机票",
+     "url":"https://www.pelago.com/en-SG/static-pages/sia-mandai-2026/"}
+  ],
+
+  "bundles": {
+    "d2":{"name":"2 园 1 日 Destination Pass","kind":"official","who":"all","oneDay":true,"max":2,"parks":"all","a":88,"c":60},
+    "d6one":{"name":"6 园 1 日 Destination Pass","kind":"official","who":"all","oneDay":true,"max":6,"parks":"all","a":118,"c":90},
+    "d6five":{"name":"6 园 5 日 Destination Pass","kind":"official","who":"all","oneDay":false,"max":6,"parks":"all","a":158,"c":110},
+    "d6fiveSia":{"name":"6 园 5 日 Destination Pass（新航专享）","kind":"sia","requiresCard":"sia","who":"all","oneDay":false,"max":6,"parks":"all","a":148,"c":105,"from":"2026-01-01","to":"2027-03-31"},
+    "l2":{"name":"本地居民专享 2 园套票","kind":"official","who":"local","oneDay":true,"max":2,"from":"2026-06-01","to":"2027-03-31","kidAges":["child","student"],
+      "combos":[
+        {"parks":["zoo","bp"], "adult":{"reg":69,"peak":69},"kid":{"reg":49,"peak":49}},
+        {"parks":["zoo","rw"], "adult":{"reg":69,"peak":69},"kid":{"reg":49,"peak":49}},
+        {"parks":["zoo","exp"],"adult":{"reg":59,"peak":69},"kid":{"reg":44,"peak":50}},
+        {"parks":["rwa","zoo"],"adult":{"reg":79,"peak":79},"kid":{"reg":55,"peak":55}},
+        {"parks":["rwa","exp"],"adult":{"reg":65,"peak":75},"kid":{"reg":50,"peak":52}}
+      ]},
+    "otaFlex2":{"name":"OTA 任选 2 园 1 日（Klook / KKday Flexi Pass）","kind":"ota","who":"all","oneDay":true,"max":2,"parks":"all"},
+    "klookWild":{"name":"Klook Singapore Wildlife Pass（4 选 3）","kind":"ota","who":"all","oneDay":false,"max":3,"parks":["zoo","ns","rw","bp"]}
+  },
+
+  "otaDefaults": {
+    "_note":"单园默认按游客价 9 折估算；夜间动物园成人用 Trip.com 实见价；Flexi 2 园约 US$68–69≈官网 S$88；Wildlife Pass 成人 S$93.99 来自搜索结果，儿童按 75% 估",
+    "rwa":{"a":49.5,"c":35.1},"zoo":{"a":44.1,"c":30.6},"ns":{"a":46.4,"c":36.9},
+    "bp":{"a":44.1,"c":30.6},"rw":{"a":40.5,"c":29.7},"exp":{"a":34.2,"c":25.2},
+    "otaFlex2":{"a":88,"c":60},"klookWild":{"a":93.99,"c":70.5}
+  },
+
+  "holidays": {
+    "2026-01-01":"元旦","2026-02-17":"农历新年","2026-02-18":"农历新年","2026-03-21":"开斋节","2026-04-03":"耶稣受难日",
+    "2026-05-01":"劳动节","2026-05-27":"哈芝节","2026-05-31":"卫塞节","2026-06-01":"卫塞节补假","2026-08-09":"国庆日",
+    "2026-08-10":"国庆日补假","2026-11-08":"屠妖节","2026-11-09":"屠妖节补假","2026-12-25":"圣诞节",
+    "2027-01-01":"元旦","2027-02-06":"农历新年","2027-02-07":"农历新年","2027-02-08":"农历新年补假","2027-03-10":"开斋节",
+    "2027-03-26":"耶稣受难日","2027-05-01":"劳动节","2027-05-17":"哈芝节","2027-05-20":"卫塞节","2027-08-09":"国庆日",
+    "2027-10-28":"屠妖节","2027-12-25":"圣诞节"
+  },
+
+  "channels": [
+    {"links":[["Mandai 官网单园票","https://www.mandai.com/en/tickets-and-passes/single-attractions.html"]],"who":"所有人","terms":"游客价固定（雨林 S$55/39）；本地价分平日/周末（雨林 S$45 / S$50），入园可能查证件。"},
+    {"links":[["WildPass（免费注册）","https://www.mandai.com/wildpass"]],"who":"公民、PR、EP/WP/DP，15 岁以上，需 Singpass","terms":"在线买本地价；生日月一张免费园票（需同行一位全价成人）；园内餐饮零售 9 折（在 Mandai App 出示电子卡）。Mandai App 本身没有专属门票折扣。"},
+    {"links":[["POSB Everyday / PAssion POSB 借记卡","https://www.mandai.com/en/posb.html"]],"who":"持卡人付款，可替朋友买","terms":"游客标准价 5 折，至 2026-12-31；公共假期及前夕不可用；每月名额有限。代码 POSBPED / PADEBIT。"},
+    {"links":[["Trust+ 卡","https://www.mandai.com/en/discover-mandai/promotions/partner-promos.html"]],"who":"持卡人","terms":"5 折，至 2027-03-31，不含 Exploria。"},
+    {"links":[["NTUC 工会会员","https://www.ntuc.org.sg/uportal/memberships/deals-for-members/Mandai-Wildlife-Reserve/"]],"who":"会员，每人限 4 张","terms":"7 折，仅周一至周四（不含公共假期及前夕），至 2027-03-31。"},
+    {"links":[["JCB / SAFRA / HomeTeamNS / PAssion 卡","https://www.mandai.com/en/discover-mandai/promotions/partner-promos.html"]],"who":"持卡人或会员","terms":"最高 7 折。PAssion 卡为周一至周四；其余卡未写明可用日，本工具按周一至周四保守计算。"},
+    {"links":[["新航 KrisFlyer 专享（Pelago）","https://www.pelago.com/en-SG/static-pages/sia-mandai-2026/"]],"who":"KrisFlyer 会员，且有飞新加坡的新航机票","terms":"雨林、动物园、飞禽、河川单园票 75 折；6 园 5 日套票成人减 S$10、儿童减 S$5；至 2027-03-31。在 Pelago 用 KrisFlyer 账号登录后选 Singapore Airlines Exclusive。夜间动物园不在折扣内。"},
+    {"links":[["Destination Pass 套票","https://www.mandai.com/en/tickets-and-passes/multi-attractions.html"],["Pelago","https://www.pelago.com/en-SG/activity/pj0sl-mandai-destination-passes-singapore/"]],"who":"所有人，同价","terms":"2 园 1 日 S$88/60；6 园 1 日 S$118/90；6 园 5 日 S$158/110（含雨林）。Pelago 也可用 KrisFlyer 里程兑换。"},
+    {"links":[["本地居民专享 2 园套票","https://www.mandai.com/en/discover-mandai/promotions/2-attraction-pass.html"]],"who":"仅 WildPass 本地居民","terms":"至 2027-03-31，1 日有效。雨林+动物园 S$79/55；动物园+飞禽 或 动物园+河川 S$69/49；雨林+Exploria S$65（周末 S$75）；动物园+Exploria S$59（周末 S$69）。13–21 岁学生按儿童价。"},
+    {"links":[["Klook","https://www.klook.com/en-SG/activity/30305-singapore-zoo-multi-parks-bundle/"],["KKday 任选 2 园套票","https://www.kkday.com/en-sg/product/39249-mandai-wildlife-bundle-singapore"]],"who":"所有人","terms":"转售官方 2 园 1 日 Destination Pass，约 US$68–69，和官网 S$88 基本同价，可选雨林。"},
+    {"links":[["Klook Singapore Wildlife Pass","https://www.klook.com/en-SG/activity/70278-singapore-wildlife-pass/"]],"who":"所有人","terms":"从动物园、夜间动物园、河川、飞禽中选 2–3 个，不含雨林；搜索结果见 S$93.99（原价 S$103），具体选几个园待核实。"},
+    {"links":[["Trip.com","https://www.trip.com/travel-guide/attraction/singapore/rainforest-wild-adventure-149671899/"],["Klook","https://www.klook.com/en-SG/activity/142887-rainforest-wild-asia-ticket-in-singapore/"],["KKday 单园票","https://www.kkday.com/en/product/269223"]],"who":"所有人（游客票）","terms":"价格浮动，常比官网游客价低 5–20%。夜间动物园在 Trip.com 曾见 S$46.40；Headout 雨林 S$55 不可退。KKday App 码 APP5OFF 再 95 折。"},
+    {"links":[["Friends of Mandai 年卡","https://www.mandai.com/en/tickets-and-passes.html"]],"who":"本地年卡","terms":"约 S$58/月起，5 园一年无限次。只玩一次不划算，未纳入计算。"}
+  ]
+}

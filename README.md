@@ -1,0 +1,47 @@
+# Mandai 门票比价器
+
+输入同行人身份（本地居民 / 游客、年龄）、想去的园区（必去 / 随意 / 不去）、具体游玩日期和持有的卡，自动找总价最低的买法，排好每天去哪，并给出分渠道的下单清单。
+
+线上版本：https://claude.ai/artifact/QyHDmJHKHH5b8DdNmAxaxb
+
+## 文件
+| 文件 | 作用 |
+|---|---|
+| `index.html` | 页面骨架和样式 |
+| `app.js` | 计算和渲染逻辑 |
+| `prices.json` | **所有价格和规则**：园区票价、合作卡折扣及有效期、套票、OTA 默认价、新加坡公共假期、渠道说明 |
+
+页面每次打开都会重新拉取 `prices.json`（`cache: no-store`）再计算。调价只改 JSON，不用动代码。
+
+## 本地运行
+浏览器直接双击打开会读不到 JSON，需要起一个本地服务：
+
+```bash
+cd ~/my_projects_LLM/mandai_ticket_planner
+python3 -m http.server   # 然后访问 http://localhost:8000
+```
+
+## 更新价格
+1. 改 `prices.json`，同时更新 `updatedAt`。
+2. 让 Claude 重新发布到上面的 artifact 链接（发布前会把三个文件同步到临时目录）。
+
+## 覆盖的渠道
+- Mandai 官网单园票：本地居民价（平日 / 周末及公共假期）、游客价
+- 合作门户折扣：POSB Everyday、PAssion POSB 借记卡、Trust+、NTUC、JCB、SAFRA、HomeTeamNS、PAssion 卡
+- 新航 KrisFlyer 专享（Pelago）：单园 75 折（雨林 / 动物园 / 飞禽 / 河川），6 园 5 日套票减 S$10 / S$5
+- Destination Pass：2 园 1 日、6 园 1 日、6 园 5 日
+- 本地居民专享 2 园套票（WildPass，固定 5 种组合）
+- OTA：单园票、Klook / KKday 任选 2 园、Klook Singapore Wildlife Pass（4 选 3，不含雨林）
+
+## 算法
+1. 枚举「必去 ∪ 随意园区的任意子集」。
+2. 对每个组合，枚举把园区分到所选日期上的所有方式（每天 ≤2 个白天园 + 夜间动物园）。价格规则相同的日期合并为一类，减少重复计算。
+3. 每个日期按 `prices.json` 判断：周末 / 公共假期 → 本地高峰价；公共假期及前夕 → 合作折扣不可用；周一至周四限定；各渠道有效期。
+4. 每人把「各园单票最低渠道」和所有适用套票当作候选，用位掩码 DP 做精确覆盖取最低；1 日套票内的园必须同一天。
+5. NTUC 每人限购 4 张，超出时让节省最少的人改用次优渠道。
+
+## 未核实的假设
+- JCB / SAFRA / HomeTeamNS 可用日官网未写明，按周一至周四保守计算。
+- 合作门户和新航折扣以游客标准价为基数（依据 2025 年实际成交价推断）；新航专享能否替同行一起买未写明。
+- Klook Wildlife Pass 成人 S$93.99 来自搜索结果，儿童价按 75% 估算；OTA 任选 2 园默认按官网 S$88。
+- 折扣有效期按入园日期判断（官方部分条款按购买日期）。

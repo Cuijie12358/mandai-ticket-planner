@@ -1,0 +1,146 @@
+<title>Mandai 门票比价器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: left control column (who / where / when / cards), right result column; stacks on phones. Palette: canopy green ink + leaf accent + mango highlight for the winning price. */
+:root{
+  --bg:#f3f6f1; --panel:#ffffff; --ink:#15281d; --muted:#5b6e61; --line:#d7e1d6;
+  --leaf:#2f7d4f; --leaf-soft:#e2f0e5; --mango:#e39b1b; --mango-soft:#fdf1da; --warn:#b4472f;
+  --f-display:"Bricolage Grotesque", "Noto Sans SC", system-ui, sans-serif;
+  --f-body:"Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --f-num:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --panel:#17221b; --ink:#e3ece4; --muted:#93a796; --line:#2a3a2f;
+  --leaf:#6cc48d; --leaf-soft:#1d3326; --mango:#f2b54a; --mango-soft:#3a2d14; --warn:#ec8a72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --panel:#17221b; --ink:#e3ece4; --muted:#93a796; --line:#2a3a2f;
+  --leaf:#6cc48d; --leaf-soft:#1d3326; --mango:#f2b54a; --mango-soft:#3a2d14; --warn:#ec8a72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.stamp{font-family:var(--f-num);font-size:12px;color:var(--muted);margin-top:8px}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;margin-top:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.controls{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0 0 10px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.person{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-num)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:6px 10px}
+button:hover{border-color:var(--leaf)}
+:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+.icon-btn{padding:6px 9px;color:var(--muted)}
+.park{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.park:last-child{border-bottom:0}
+.park .nm{min-width:0}
+.park .nm b{font-weight:500}
+.park .nm small{display:block;color:var(--muted);font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-shrink:0}
+.seg button{border:0;border-radius:0;padding:4px 10px;font-size:12px;background:transparent;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--leaf);color:var(--panel)}
+.seg button.no[aria-pressed="true"]{background:var(--muted)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.cards label{display:flex;gap:6px;align-items:flex-start;font-size:13px}
+.cards label small{color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.results{display:flex;flex-direction:column;gap:16px;min-width:0}
+.best{background:var(--mango-soft);border:1px solid var(--mango);border-radius:14px;padding:18px}
+.best .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.total{font-family:var(--f-num);font-weight:700;font-size:clamp(34px,6vw,52px);line-height:1;margin:6px 0 4px}
+.total small{font-size:.4em;color:var(--muted);font-weight:500}
+.cmp{color:var(--muted);font-size:13px}
+.cmp b{color:var(--leaf)}
+.day{margin-top:14px}
+.day h3{font-size:13px;margin:0 0 6px;font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:12px}
+td.num,th.num{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl{overflow-x:auto}
+.chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf);white-space:nowrap}
+.chip.est{background:var(--mango-soft);color:var(--mango)}
+.chip.pass{background:var(--ink);color:var(--panel)}
+.tag-best{font-size:11px;color:var(--mango);font-weight:700;margin-left:6px}
+.whatif li{margin-bottom:4px}
+a.buy{font-size:12px;color:var(--leaf);text-decoration:none;white-space:nowrap}
+a.buy:hover{text-decoration:underline}
+.orders{display:flex;flex-direction:column;gap:12px}
+.order{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.order-head h3{margin:2px 0 0;font-size:15px}
+a.go{background:var(--leaf);color:var(--panel);text-decoration:none;font-weight:500;padding:8px 14px;border-radius:8px;white-space:nowrap}
+a.go:hover{filter:brightness(1.08)}
+.lines{font-family:var(--f-num);font-size:12px;color:var(--muted);margin:0}
+.sub{font-size:13px}.sub b{font-family:var(--f-num)}
+.needs{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+.needs label{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.needs input{margin-top:3px}
+.needs input:checked + span{color:var(--muted);text-decoration:line-through}
+.warn{color:var(--warn)}
+.src a{color:var(--leaf)}
+details summary{cursor:pointer;font-weight:500}
+.date-row{display:grid;grid-template-columns:minmax(0,150px) 1fr auto;gap:8px;align-items:center;margin-bottom:6px}
+input[type=date]{font:inherit;font-family:var(--f-num);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;width:100%;min-width:0}
+.dtag{font-size:12px;color:var(--muted);min-width:0}
+.dtag b{color:var(--ink);font-weight:500}
+.dtag .warn{display:block}
+.ota-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:4px 8px;align-items:center;margin-top:8px;font-size:13px}
+ul{padding-left:18px;margin:6px 0}
+@media (prefers-reduced-motion:no-preference){.total{transition:color .2s}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Mandai 动物园门票比价器</h1>
+  <p>输入同行人的身份和想去的园区，自动在官网本地价、游客价、银行卡/工会合作折扣、Destination Pass 套票、OTA 平台之间找总价最低的组合，并排好每天去哪。</p>
+  <div class="stamp" id="stamp">正在加载价格数据…</div>
+</header>
+
+<div class="grid">
+<section class="controls">
+  <div class="panel">
+    <h2>同行人</h2>
+    <div id="people"></div>
+    <button id="addP" type="button">＋ 添加一人</button>
+    <p class="hint">“本地居民”= 公民 / PR / EP / WP / DP，可买本地价（入园可能查证件）。学生价仅限本地学生。3 岁以下免费。</p>
+  </div>
+
+  <div class="panel">
+    <h2>园区</h2>
+    <div id="parks"></div>
+  </div>
+
+  <div class="panel">
+    <h2>游玩日期</h2>
+    <div id="dates"></div>
+    <button id="addD" type="button">＋ 添加一天</button>
+    <p class="hint">按日期自动判断平日 / 周末 / 公共假期及前夕，以及每张卡当天能不能用。每天最多 2 个白天园 + 夜间动物园；1 日套票里的园必须同一天去。</p>
+  </div>
+
+  <div class="panel">
+    <h2>你持有的卡 / 会员</h2>
+    <div class="cards" id="cards"></div>
+    <p class="hint">合作折扣在 Mandai Partner Portal 按<b>游客标准价</b>打折，持卡人可替朋友一起买，朋友不需要卡。每月名额有限，售完即止。新航专享需同行有人是 KrisFlyer 会员并订了新航机票。</p>
+  </div>
+
+  <div class="panel">
+    <details>
+      <summary>OTA 平台价（Klook / Trip.com / KKday 等）</summary>
+      <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="useOta" checked> 把 OTA 价纳入比较</label>
+      <p class="hint">默认按游客价 9 折估算（夜间动物园用 Trip.com 实见 S$46.40）。在 App 里查到实价后改这里，结果会立即更新。</p>
+      <div class="ota-grid" id="ota"></div>
+    </details>
+  </div>
+</section>
+
+<section class="results" id="results"></section>
+</div>
+</div>
+
+<script src="app.js"></script>
