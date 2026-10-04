@@ -2,7 +2,7 @@
 
 输入同行人身份（本地居民 / 游客、年龄）、想去的园区（必去 / 随意 / 不去）、具体游玩日期和持有的卡，自动找总价最低的买法，排好每天去哪，并给出分渠道的下单清单。
 
-线上版本：https://claude.ai/artifact/QyHDmJHKHH5b8DdNmAxaxb
+线上版本（GitHub Pages，推送到 main 后自动部署）：https://cuijie12358.github.io/mandai-ticket-planner/
 
 ## 文件
 | 文件 | 作用 |
@@ -23,7 +23,8 @@ python3 -m http.server   # 然后访问 http://localhost:8000
 
 ## 更新价格
 1. 改 `prices.json`，同时更新 `updatedAt`。
-2. 让 Claude 重新发布到上面的 artifact 链接（发布前会把三个文件同步到临时目录）。
+2. 提交并推送到 main，GitHub Pages 约 1 分钟后生效。
+3. 每周一新加坡时间 9:00 有云端定时任务自动核对官方价格并提交（见 claude.ai/code/routines）。
 
 ## 覆盖的渠道
 - Mandai 官网单园票：本地居民价（平日 / 周末及公共假期）、游客价
