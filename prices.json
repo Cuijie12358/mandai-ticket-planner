@@ -284,6 +284,21 @@
       "url": "https://www.pelago.com/en-SG/static-pages/sia-mandai-2026/"
     },
     {
+      "id": "aia",
+      "kind": "aia",
+      "name": "AIA 客户专享",
+      "pct": 0.3,
+      "days": "all",
+      "parks": [
+        "rwa"
+      ],
+      "from": "2026-09-01",
+      "to": "2026-12-31",
+      "guess": true,
+      "holder": "同行有人是 AIA 保单持有人",
+      "url": "https://www.mandai.com/en/tickets-and-passes/promotions.html"
+    },
+    {
       "id": "bulk",
       "kind": "bulk",
       "name": "企业批量票",
@@ -578,6 +593,16 @@
       ],
       "who": "KrisFlyer 会员，且有飞新加坡的新航机票",
       "terms": "雨林、动物园、飞禽、河川单园票 75 折；6 园 5 日套票成人减 S$10、儿童减 S$5；至 2027-03-31。在 Pelago 用 KrisFlyer 账号登录后选 Singapore Airlines Exclusive。夜间动物园不在折扣内。"
+    },
+    {
+      "links": [
+        [
+          "AIA 客户专享（AIA+ App）",
+          "https://www.mandai.com/en/tickets-and-passes/promotions.html"
+        ]
+      ],
+      "who": "AIA 保单持有人",
+      "terms": "雨林探险园 7 折，成人 S$38.50（原价 S$55），含最多 5 个 Adventure+ 项目；2026-09-01 至 2026-12-31，在 AIA+ App 预订。能否替同行购买、儿童价和可用日官网未写明。"
     },
     {
       "links": [
