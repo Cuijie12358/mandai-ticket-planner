@@ -7,7 +7,8 @@ const state = {
   people:[{res:'local',age:'adult'},{res:'tourist',age:'adult'}],
   pref:{rwa:'must',zoo:'maybe',ns:'maybe',bp:'maybe',rw:'maybe',exp:'no'},
   dates:['2026-10-12','2026-10-13'],
-  cards:new Set(['pdebit']), useOta:true, ota:{}
+  cards:new Set(['pdebit']), useOta:true, ota:{},
+  bulk:{pct:40, min:100}, tab:'cards'
 };
 
 const money = v => 'S$' + (Math.round(v*100)/100).toFixed(2).replace(/\.00$/,'');
@@ -44,8 +45,10 @@ function singleOptions(p, parkId, ctx, day){
   }
   for (const c of CARDS){
     if (!ctx.cards.has(c.id) || !c.parks.includes(parkId) || !day.okCards.has(c.id)) continue;
-    const label = c.kind==='sia' ? `Pelago · 新航专享 ${Math.round(c.pct*100)}% off` : `合作门户 · ${c.name} ${Math.round(c.pct*100)}% off`;
-    out.push({ch:label, price:+(park.std[t]*(1-c.pct)).toFixed(2), kind:c.kind, card:c.id});
+    const pct = c.kind==='bulk' ? ctx.bulk.pct/100 : c.pct;
+    const label = c.kind==='sia' ? `Pelago · 新航专享 ${Math.round(pct*100)}% off`
+      : c.kind==='bulk' ? `企业批量票 ${Math.round(pct*100)}% off` : `合作门户 · ${c.name} ${Math.round(pct*100)}% off`;
+    out.push({ch:label, price:+(park.std[t]*(1-pct)).toFixed(2), kind:c.kind, card:c.id, est:c.kind==='bulk'});
   }
   if (ctx.useOta){
     const o = ctx.ota[parkId];
@@ -68,12 +71,12 @@ function bundlePrice(bid, p, ctx, parks, day){
 }
 
 // 一个人在给定分天方案下的最低买法：单票 + 各种套票做精确覆盖（位掩码 DP）
-function coverPerson(p, schedule, ctx, banned){
+function coverPerson(p, schedule, ctx, banned = new Set()){
   const S = schedule.flatMap(d=>d.parks), n = S.length, full = (1<<n)-1;
   const dayIdx = id => schedule.findIndex(d=>d.parks.includes(id));
   const products = [];
   S.forEach((id,i)=>{
-    const o = singleOptions(p, id, ctx, schedule[dayIdx(id)].day).find(o => !(banned && o.card==='ntuc'));
+    const o = singleOptions(p, id, ctx, schedule[dayIdx(id)].day).find(o => !banned.has(o.card));
     products.push({mask:1<<i, cost:o.price, item:{type:'single', park:id, ...o}});
   });
   for (const [bid, b] of Object.entries(BUNDLES)){
@@ -143,11 +146,15 @@ function groupCost(parks, ctx){
   const payers = ctx.people.filter(p=>p.age!=='infant');
   let best = null;
   for (const sch of schedules(parks, ctx)){
-    let per = payers.map(p => coverPerson(p, sch, ctx, false));
+    let ban = new Set();
+    let per = payers.map(p => coverPerson(p, sch, ctx, ban));
+    // 企业批量票有最低张数：整单不够就不用
+    const bulkCount = per.flatMap(r=>r.days.flat()).filter(it=>it.card==='bulk').length;
+    if (bulkCount && bulkCount < ctx.bulk.min){ ban = new Set(['bulk']); per = payers.map(p => coverPerson(p, sch, ctx, ban)); }
     // NTUC 每人限购 4 张：超出则让节省最少的人改用次优渠道
     const ntucCount = per.flatMap(r=>r.days.flat()).filter(it=>it.card==='ntuc').length;
     if (ntucCount > 4){
-      const alt = payers.map(p => coverPerson(p, sch, ctx, true));
+      const alt = payers.map(p => coverPerson(p, sch, ctx, new Set([...ban, 'ntuc'])));
       const order = payers.map((_,i)=>i).sort((a,b)=>(alt[a].cost-per[a].cost)-(alt[b].cost-per[b].cost));
       let used = ntucCount;
       for (const i of order){
@@ -209,7 +216,11 @@ function renderParks(){
     </div>`).join('');
 }
 function renderCards(){
-  $('#cards').innerHTML = CARDS.map(c=>`<label><input type="checkbox" id="card-${c.id}" data-card="${c.id}" ${state.cards.has(c.id)?'checked':''}><span>${c.name} <small>${Math.round(c.pct*100)}%</small></span></label>`).join('');
+  document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===state.tab));
+  $('#tab-cards').hidden = state.tab!=='cards'; $('#tab-group').hidden = state.tab!=='group';
+  $('#bulkOn').checked = state.cards.has('bulk');
+  $('#bulkPct').value = state.bulk.pct; $('#bulkMin').value = state.bulk.min;
+  $('#cards').innerHTML = CARDS.filter(c=>c.kind!=='bulk').map(c=>`<label><input type="checkbox" id="card-${c.id}" data-card="${c.id}" ${state.cards.has(c.id)?'checked':''}><span>${c.name} <small>${Math.round(c.pct*100)}%</small></span></label>`).join('');
 }
 function renderOta(){
   $('#ota').innerHTML = '<span class="lbl">园区</span><span class="lbl">成人</span><span class="lbl">儿童</span>' +
@@ -234,6 +245,11 @@ function buyInfo(it, p, day){
     '只能从动物园 / 夜间动物园 / 河川 / 飞禽里选，不含雨林',
     '本页价格为估算（成人 S$93.99 来自搜索结果，儿童价未查到），下单前核对并改左侧价格',
     '确认选几个园、有效天数和是否需要预约']};
+  if (it.kind==='bulk') return {key:'bulk', name:'Mandai 企业批量票（Corporate Bulk Purchase）', url:'https://www.mandai.com/en/partnerships/corporate-wildlife-benefits.html', needs:[
+    '以公司名义在官网提交询价（Enquire Now），一般 3–5 个工作日回复',
+    `本页按 ${state.bulk.pct}% off、至少 ${state.bulk.min} 张计算；拿到报价后在「团体 / 批量」里改成实际数字`,
+    '票不限日期，3 个月内有效；由公司统一付款',
+    '官方写的是最高 6 折，实际折扣按购买量分档']};
   if (it.kind==='sia') return {key:'sia', name:'Pelago · 新航 KrisFlyer 专享', url:'https://www.pelago.com/en-SG/static-pages/sia-mandai-2026/', needs:[
     '用 KrisFlyer 账号登录 Pelago（需是 KrisFlyer 会员）',
     '账号里要有飞新加坡的新航机票，选 “Singapore Airlines Exclusive” 选项',
@@ -377,6 +393,8 @@ document.addEventListener('change', e=>{
   const t = e.target;
   if (!DATA) return;
   if (t.dataset.k){ const p = state.people[+t.dataset.i]; p[t.dataset.k] = t.value; if (p.res==='tourist' && p.age==='student') p.age='adult'; renderPeople(); }
+  else if (t.id==='bulkOn'){ t.checked ? state.cards.add('bulk') : state.cards.delete('bulk'); }
+  else if (t.id==='bulkPct' || t.id==='bulkMin'){ const v = parseFloat(t.value); if (!(v>=0)) return; state.bulk[t.id==='bulkPct'?'pct':'min'] = t.id==='bulkPct' ? Math.min(v,90) : Math.round(v); }
   else if (t.dataset.card){ t.checked ? state.cards.add(t.dataset.card) : state.cards.delete(t.dataset.card); renderDates(); }
   else if (t.dataset.date){ state.dates[+t.dataset.date] = t.value; renderDates(); }
   else if (t.id==='useOta') state.useOta = t.checked;
@@ -391,6 +409,7 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('click', e=>{
   const t = e.target.closest('button'); if (!t || !DATA) return;
+  if (t.dataset.tab){ state.tab = t.dataset.tab; renderCards(); return; }
   if (t.dataset.park){ state.pref[t.dataset.park] = t.dataset.v; renderParks(); render(); }
   else if (t.dataset.del){ state.people.splice(+t.dataset.del,1); renderPeople(); render(); }
   else if (t.dataset.deldate){ state.dates.splice(+t.dataset.deldate,1); renderDates(); render(); }

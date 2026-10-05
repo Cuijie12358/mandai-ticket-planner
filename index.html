@@ -47,6 +47,11 @@ button:hover{border-color:var(--leaf)}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
 .cards label{display:flex;gap:6px;align-items:flex-start;font-size:13px}
 .cards label small{color:var(--muted)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tabs button{border:0;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);padding:6px 12px;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--leaf)}
+.check{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+#tab-group .row2 input{margin-top:4px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
 .results{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -124,9 +129,23 @@ ul{padding-left:18px;margin:6px 0}
   </div>
 
   <div class="panel">
-    <h2>你持有的卡 / 会员</h2>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="cards" aria-selected="true">卡和会员</button>
+      <button type="button" role="tab" data-tab="group" aria-selected="false">团体 / 批量</button>
+    </div>
+    <div id="tab-cards" role="tabpanel">
     <div class="cards" id="cards"></div>
     <p class="hint">合作折扣在 Mandai Partner Portal 按<b>游客标准价</b>打折，持卡人可替朋友一起买，朋友不需要卡。每月名额有限，售完即止。新航专享需同行有人是 KrisFlyer 会员并订了新航机票。</p>
+    </div>
+    <div id="tab-group" role="tabpanel" hidden>
+      <label class="check"><input type="checkbox" id="bulkOn"> <span>我能通过公司买企业批量票</span></label>
+      <div class="row2">
+        <label><span class="lbl">折扣 % off</span><input type="number" id="bulkPct" min="0" max="90" step="1" value="40"></label>
+        <label><span class="lbl">最少张数</span><input type="number" id="bulkMin" min="1" step="1" value="100"></label>
+      </div>
+      <p class="hint">Mandai 没有给散客的团体价。企业批量票按游客价打折，官方写最高 6 折，不限日期、3 个月内有效，需公司询价；最少张数官方未公布，默认 100 张是估计值，拿到报价后改成实际数字。整单张数不够时会自动不用它。</p>
+      <p class="hint">旅行社团体价只给业内；学校团体每 10 名学生送 1 名老师，均未纳入计算。</p>
+    </div>
   </div>
 
   <div class="panel">
