@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mandai 门票比价器</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -17,7 +22,7 @@
   --bg:#0f1712; --panel:#17221b; --ink:#e3ece4; --muted:#93a796; --line:#2a3a2f;
   --leaf:#6cc48d; --leaf-soft:#1d3326; --mango:#f2b54a; --mango-soft:#3a2d14; --warn:#ec8a72; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
 header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
 header p{margin:0;color:var(--muted);max-width:68ch}
@@ -51,6 +56,28 @@ button:hover{border-color:var(--leaf)}
 .tabs button{border:0;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);padding:6px 12px;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--leaf)}
 .check{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.item-who{font-size:13px}.item-who b{font-weight:500}
+.item-ch{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.item-ch .chip{white-space:normal}
+.item-price{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+.flex-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.flex-grid select,.flex-grid input{margin-top:4px}
+@media (max-width:420px){.flex-grid{grid-template-columns:1fr 1fr}.flex-grid label:first-child{grid-column:1 / -1}}
+.cal{display:flex;flex-direction:column;gap:4px}
+.cal button{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:6px 8px;border-radius:8px;border:1px solid transparent;background:transparent;width:100%}
+.cal button:hover{border-color:var(--line)}
+.cal button[aria-pressed="true"]{border-color:var(--leaf);background:var(--leaf-soft)}
+.cal .d{font-family:var(--f-num);font-size:12px;white-space:nowrap}
+.cal .d small{display:block;color:var(--muted);font-family:var(--f-body);white-space:normal}
+.cal .bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.cal .bar i{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:4px}
+.cal .is-min .bar i{background:var(--mango)}
+.cal .v{font-family:var(--f-num);font-size:12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cal .v small{display:block;color:var(--muted)}
 .combo-list{display:flex;flex-direction:column;gap:10px}
 .combo{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .combo.is-best{border-color:var(--mango)}
@@ -120,6 +147,8 @@ input[type=date]{font:inherit;font-family:var(--f-num);color:var(--ink);backgrou
 ul{padding-left:18px;margin:6px 0}
 @media (prefers-reduced-motion:no-preference){.total{transition:color .2s}}
 </style>
+</head>
+<body>
 
 <div class="wrap">
 <header>
@@ -143,9 +172,22 @@ ul{padding-left:18px;margin:6px 0}
   </div>
 
   <div class="panel">
-    <h2>游玩日期</h2>
+    <div class="tabs" role="tablist" aria-label="游玩日期">
+      <button type="button" role="tab" data-dmode="fixed" aria-selected="true">指定日期</button>
+      <button type="button" role="tab" data-dmode="flex" aria-selected="false">日期未定</button>
+    </div>
+    <div id="dm-fixed" role="tabpanel">
     <div id="dates"></div>
     <button id="addD" type="button">＋ 添加一天</button>
+    </div>
+    <div id="dm-flex" role="tabpanel" hidden>
+      <div class="flex-grid">
+        <label><span class="lbl">从哪天开始看</span><input type="date" id="flexStart"></label>
+        <label><span class="lbl">往后比较</span><select id="flexSpan"><option value="7">7 天</option><option value="14" selected>14 天</option><option value="30">30 天</option></select></label>
+        <label><span class="lbl">连续玩几天</span><select id="flexLen"><option value="1">1 天</option><option value="2" selected>2 天</option><option value="3">3 天</option></select></label>
+      </div>
+      <p class="hint">逐个出发日计算总价，结果区会列出每天的价格，默认选最便宜的一天。</p>
+    </div>
     <p class="hint">按日期自动判断平日 / 周末 / 公共假期及前夕，以及每张卡当天能不能用。每天最多 2 个白天园 + 夜间动物园；1 日套票里的园必须同一天去。</p>
   </div>
 
@@ -183,4 +225,6 @@ ul{padding-left:18px;margin:6px 0}
 </div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js" charset="utf-8"></script>
+</body>
+</html>
