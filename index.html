@@ -225,6 +225,9 @@ ul{padding-left:18px;margin:6px 0}
 </div>
 </div>
 
-<script src="app.js" charset="utf-8"></script>
+<script>
+// GitHub Pages 会把 app.js 缓存 10 分钟；每次带时间戳加载，避免新页面配旧脚本
+(function(){ var s = document.createElement('script'); s.src = 'app.js?t=' + Date.now(); s.charset = 'utf-8'; document.body.appendChild(s); })();
+</script>
 </body>
 </html>
