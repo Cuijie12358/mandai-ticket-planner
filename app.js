@@ -48,7 +48,7 @@ function singleOptions(p, parkId, ctx, day){
     if (!ctx.cards.has(c.id) || !c.parks.includes(parkId) || !day.okCards.has(c.id)) continue;
     const pct = c.kind==='bulk' ? ctx.bulk.pct/100 : c.pct;
     const label = c.kind==='sia' ? `Pelago · 新航专享 ${Math.round(pct*100)}% off`
-      : c.kind==='bulk' ? `企业批量票 ${Math.round(pct*100)}% off` : `合作门户 · ${c.name} ${Math.round(pct*100)}% off`;
+      : c.kind==='bulk' ? `企业批量票 ${Math.round(pct*100)}% off` : c.kind==='aia' ? `AIA+ App · AIA 客户专享 ${Math.round(pct*100)}% off` : `合作门户 · ${c.name} ${Math.round(pct*100)}% off`;
     out.push({ch:label, price:+(park.std[t]*(1-pct)).toFixed(2), kind:c.kind, card:c.id, est:c.kind==='bulk'});
   }
   if (ctx.useOta){
@@ -255,6 +255,11 @@ function buyInfo(it, p, day){
     `本页按 ${state.bulk.pct}% off、至少 ${state.bulk.min} 张计算；拿到报价后在「团体 / 批量」里改成实际数字`,
     '票不限日期，3 个月内有效；由公司统一付款',
     '官方写的是最高 6 折，实际折扣按购买量分档']};
+  if (it.kind==='aia') return {key:'aia', name:'AIA+ App · AIA 客户专享', url:'https://www.mandai.com/en/tickets-and-passes/promotions.html', needs:[
+    '需是 AIA 保单持有人，在 AIA+ App 里找 Mandai 雨林探险园优惠预订',
+    '只适用雨林探险园：成人 S$38.50（原价 S$55），含最多 5 个 Adventure+ 项目',
+    '有效期 2026-09-01 至 2026-12-31',
+    '能否一次替同行买、儿童价和可用日官网没写，下单时在 App 里确认']};
   if (it.kind==='sia') return {key:'sia', name:'Pelago · 新航 KrisFlyer 专享', url:'https://www.pelago.com/en-SG/static-pages/sia-mandai-2026/', needs:[
     '用 KrisFlyer 账号登录 Pelago（需是 KrisFlyer 会员）',
     '账号里要有飞新加坡的新航机票，选 “Singapore Airlines Exclusive” 选项',
@@ -453,7 +458,7 @@ function render(){
 
   ${checklist(head.plan)}
 
-  ${whatIf.length ? `<div class="panel"><h2>换个渠道还能更便宜</h2><ul class="whatif">${whatIf.map(w=>`<li>${w.c.kind==='sia' ? `如果${w.c.holder}，用 <b>${w.c.name}</b>` : `如果你（或同行的本地朋友）有 <b>${w.c.name}</b>`}，同样行程再省 <b>${money(w.save)}</b>。</li>`).join('')}</ul>
+  ${whatIf.length ? `<div class="panel"><h2>换个渠道还能更便宜</h2><ul class="whatif">${whatIf.map(w=>`<li>${w.c.holder ? `如果${w.c.holder}，用 <b>${w.c.name}</b>` : `如果你（或同行的本地朋友）有 <b>${w.c.name}</b>`}，同样行程再省 <b>${money(w.save)}</b>。</li>`).join('')}</ul>
     <p class="hint">合作门户买的是游客标准价票打折，无身份限制，持卡人一次付款即可帮朋友买。</p></div>` : ''}
 
   ${combos.length>1 ? `<div class="panel" id="combos"><h2>多去几个园要加多少钱</h2>
