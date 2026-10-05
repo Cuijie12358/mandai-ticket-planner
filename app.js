@@ -8,7 +8,8 @@ const state = {
   pref:{rwa:'must',zoo:'maybe',ns:'maybe',bp:'maybe',rw:'maybe',exp:'no'},
   dates:['2026-10-12','2026-10-13'],
   cards:new Set(['pdebit']), useOta:true, ota:{},
-  bulk:{pct:40, min:100}, tab:'cards', focus:null
+  bulk:{pct:40, min:100}, tab:'cards', focus:null,
+  dateMode:'fixed', flex:{start:null, span:14, len:2, pick:null}
 };
 
 const money = v => 'S$' + (Math.round(v*100)/100).toFixed(2).replace(/\.00$/,'');
@@ -174,8 +175,9 @@ function officialSingles(plan, ctx){
   return plan.payers.reduce((s,p)=> s + plan.schedule.reduce((t,d)=> t + d.parks.reduce((u,id)=> u + singleOptions(p,id,c,d.day)[0].price,0),0),0);
 }
 function subsets(arr){ const out=[[]]; for (const x of arr) for (const s of [...out]) out.push([...s,x]); return out; }
-function makeCtx(){
-  const iso = [...new Set(state.dates.filter(Boolean))].sort();
+function todayISO(){ const d = new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function makeCtx(dates = state.dates){
+  const iso = [...new Set(dates.filter(Boolean))].sort();
   return {...state, days:iso.map(dayInfo)};
 }
 
@@ -194,6 +196,9 @@ function renderPeople(){
     </div>`).join('');
 }
 function renderDates(){
+  document.querySelectorAll('[data-dmode]').forEach(b=>b.setAttribute('aria-selected', b.dataset.dmode===state.dateMode));
+  $('#dm-fixed').hidden = state.dateMode!=='fixed'; $('#dm-flex').hidden = state.dateMode!=='flex';
+  $('#flexStart').value = state.flex.start; $('#flexSpan').value = state.flex.span; $('#flexLen').value = state.flex.len;
   $('#dates').innerHTML = state.dates.map((iso,i)=>{
     let tag = '<span class="dtag">请选择日期</span>';
     if (iso){
@@ -290,7 +295,9 @@ function itemName(it){ return it.type==='pass' ? BUNDLES[it.pass].name : it.ch; 
 function itemRow(it, who, p){
   const chip = it.type==='pass' ? 'chip pass' : it.kind==='ota' ? 'chip est' : 'chip';
   const what = it.type==='pass' ? it.parks.map(x=>PK[x].name).join(' + ') : PK[it.park].name;
-  return `<tr><td>${who}</td><td>${what}</td><td><span class="${chip}">${itemName(it)}${it.est?' ≈估':''}</span><br><a class="buy" href="${buyInfo(it,p).url}" target="_blank" rel="noopener">去购买 ↗</a></td><td class="num">${money(it.price)}</td></tr>`;
+  return `<li class="item"><div class="item-main"><div class="item-who">${who} · <b>${what}</b></div>
+    <div class="item-ch"><span class="${chip}">${itemName(it)}${it.est?' ≈估':''}</span> <a class="buy" href="${buyInfo(it,p).url}" target="_blank" rel="noopener">去购买 ↗</a></div></div>
+    <div class="item-price">${money(it.price)}</div></li>`;
 }
 function whoLabel(p, i){ return `${p.res==='local'?'本地':'游客'}·${AGES[p.age].split(' ')[0]} #${i+1}`; }
 
@@ -324,7 +331,7 @@ function planBlock(plan){
   return plan.schedule.map((d,di)=>{
     const rows = plan.per.map((r,pi)=> r.days[di].map(it=>itemRow(it, whoLabel(plan.payers[pi], pi), plan.payers[pi])).join('')).join('');
     return `<div class="day"><h3>${dayLabel(d.day)}（${dayKind(d.day)}）：${d.parks.map(x=>PK[x].name).join(' → ').replace(/ → (夜间动物园)/,' → 晚上 $1')}</h3>
-      ${rows ? `<div class="tbl"><table><thead><tr><th>谁</th><th>园区</th><th>在哪买</th><th class="num">价格</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="hint">已含在前面的多日套票内。</p>'}</div>`;
+      ${rows ? `<ul class="items">${rows}</ul>` : '<p class="hint">已含在前面的多日套票内。</p>'}</div>`;
   }).join('');
 }
 function checklist(plan){
@@ -358,11 +365,53 @@ function channelsTable(){
   </tbody></table></div></div>`;
 }
 
+// 日期未定：按出发日逐个算同一组园区的总价
+function compareStarts(parks){
+  const {start, span, len} = state.flex, out = [];
+  for (let i=0; i<span; i++){
+    const dates = [...Array(len)].map((_,k)=>addDays(addDays(start,i),k));
+    const ctx = makeCtx(dates), plan = groupCost(parks, ctx);
+    if (plan) out.push({start:dates[0], dates, days:ctx.days, total:plan.total});
+  }
+  return out;
+}
+function flexPanel(rows, parks, pick){
+  if (!rows.length) return '';
+  const min = Math.min(...rows.map(r=>r.total)), max = Math.max(...rows.map(r=>r.total));
+  const kinds = r => r.days.map(d=>d.ph ? '公共假期' : d.eve ? '假期前夕' : d.peak ? '周末' : '平日').join(' / ');
+  const lostCards = r => [...new Set(r.days.flatMap(d=>[...state.cards].filter(id=>!d.okCards.has(id))))].map(id=>CARDS.find(c=>c.id===id).name);
+  return `<div class="panel" id="flex"><h2>哪天去最便宜</h2>
+    ${max-min<0.01 ? '<p class="hint"><b>这段时间每天价格一样</b>，挑你方便的日子就行。</p>' : ''}
+    <p class="hint">${parks.map(x=>PK[x].name).join(' + ')} · ${state.people.length} 人 · 连续 ${state.flex.len} 天。点某一天查看那天的方案；想比较别的园区组合，在下方组合卡片里点「设为当前方案」。</p>
+    <div class="cal">${rows.map(r=>{
+      const lost = lostCards(r);
+      const w = max>min ? 30 + 70*(r.total-min)/(max-min) : 100;
+      return `<button type="button" data-pick="${r.start}" aria-pressed="${r.start===pick}" class="${Math.abs(r.total-min)<0.01?'is-min':''}">
+        <span class="d">${r.days.map(d=>dayLabel(d)).join('<br>')}<small>${kinds(r)}${lost.length?` · ${state.flex.len>1?'部分日期':''}不能用 ${lost.join('、')}`:''}</small></span>
+        <span class="bar"><i style="width:${w.toFixed(1)}%"></i></span>
+        <span class="v">${money(r.total)}<small>${Math.abs(r.total-min)<0.01?'最低':'+'+money(r.total-min)}</small></span></button>`;
+    }).join('')}</div>
+    <div class="combo-actions" style="margin-top:8px"><span class="hint">价格差别主要来自：周末和公共假期本地价更高；公共假期及前夕合作卡不能用；部分卡仅限周一至周四。</span>
+      <button type="button" id="useFlex">用 ${dayLabel(dayInfo(pick))} 出发，切到指定日期</button></div>
+  </div>`;
+}
+
 function render(){
-  const ctx = makeCtx();
   const must = ALL.filter(id=>state.pref[id]==='must');
   const maybe = ALL.filter(id=>state.pref[id]==='maybe');
   const el = $('#results');
+  let flexHtml = '', ctx = makeCtx();
+  if (state.dateMode==='flex' && (must.length || maybe.length)){
+    const parks = state.focus ? state.focus.split('+') : (must.length ? must : [maybe[0]]);
+    const rows = compareStarts(parks);
+    if (rows.length){
+      const best = rows.reduce((m,r)=> r.total < m.total - 1e-9 ? r : m);
+      const pick = rows.find(r=>r.start===state.flex.pick) || best;
+      state.flex.chosen = pick.dates;
+      flexHtml = flexPanel(rows, parks, pick.start);
+      ctx = makeCtx(pick.dates);
+    }
+  }
   if (!ctx.days.length){ el.innerHTML = '<div class="panel">请至少选一个游玩日期。</div>'; return; }
   if (!must.length && !maybe.length){ el.innerHTML = '<div class="panel">请至少选一个“必去”或“随意”的园区。</div>'; return; }
   if (state.people.every(p=>p.age==='infant')){ el.innerHTML = '<div class="panel">3 岁以下免费，需要至少一名付费成人同行。</div>'; return; }
@@ -391,6 +440,7 @@ function render(){
   const span = ctx.days.length>1 ? `${dayLabel(ctx.days[0])} – ${dayLabel(ctx.days.at(-1))}` : dayLabel(ctx.days[0]);
 
   el.innerHTML = `
+  ${flexHtml}
   <div class="best">
     ${focused ? `<div class="focus-bar">你正在看选中的组合，比最低总价多 ${money(head.plan.total-cheapest.plan.total)}。<button type="button" data-focus="">回到最低总价</button></div>` : ''}
     <div class="kicker">${focused ? '你选的组合' : '最低总价'} · ${head.parks.map(x=>PK[x].name).join(' + ')} · ${state.people.length} 人 · ${span}</div>
@@ -422,6 +472,8 @@ document.addEventListener('change', e=>{
   else if (t.id==='bulkOn'){ t.checked ? state.cards.add('bulk') : state.cards.delete('bulk'); }
   else if (t.id==='bulkPct' || t.id==='bulkMin'){ const v = parseFloat(t.value); if (!(v>=0)) return; state.bulk[t.id==='bulkPct'?'pct':'min'] = t.id==='bulkPct' ? Math.min(v,90) : Math.round(v); }
   else if (t.dataset.card){ t.checked ? state.cards.add(t.dataset.card) : state.cards.delete(t.dataset.card); renderDates(); }
+  else if (t.id==='flexStart'){ if (!t.value) return; state.flex.start = t.value; state.flex.pick = null; }
+  else if (t.id==='flexSpan' || t.id==='flexLen'){ state.flex[t.id==='flexSpan'?'span':'len'] = +t.value; state.flex.pick = null; }
   else if (t.dataset.date){ state.dates[+t.dataset.date] = t.value; renderDates(); }
   else if (t.id==='useOta') state.useOta = t.checked;
   else return;
@@ -435,6 +487,9 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('click', e=>{
   const t = e.target.closest('button'); if (!t || !DATA) return;
+  if (t.dataset.dmode){ state.dateMode = t.dataset.dmode; renderDates(); render(); return; }
+  if (t.dataset.pick){ state.flex.pick = t.dataset.pick; render(); return; }
+  if (t.id==='useFlex' && state.flex.chosen){ state.dates = [...state.flex.chosen]; state.dateMode = 'fixed'; renderDates(); render(); window.scrollTo?.({top:0, behavior:'smooth'}); return; }
   if (t.dataset.focus!==undefined){ state.focus = t.dataset.focus || null; render(); document.querySelector('.best')?.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   if (t.dataset.tab){ state.tab = t.dataset.tab; renderCards(); return; }
   if (t.dataset.park){ state.pref[t.dataset.park] = t.dataset.v; renderParks(); render(); }
@@ -452,6 +507,7 @@ function init(data){
   CARDS = data.cards.map(c=>({...c, parks:expand(c.parks)}));
   BUNDLES = Object.fromEntries(Object.entries(data.bundles).map(([k,b])=>[k,{...b, parks:expand(b.parks || 'all')}]));
   HOLIDAYS = data.holidays;
+  state.flex.start = addDays(todayISO(), 1);
   for (const [k,v] of Object.entries(data.otaDefaults)) if (!k.startsWith('_')) state.ota[k] = {...v, est:true};
   $('#stamp').textContent = `价格数据更新于 ${data.updatedAt} · 单位 S$（${data.currency}）· 下单前请在对应渠道复核`;
   renderPeople(); renderDates(); renderParks(); renderCards(); renderOta(); render();
