@@ -8,7 +8,7 @@ const state = {
   pref:{rwa:'must',zoo:'maybe',ns:'maybe',bp:'maybe',rw:'maybe',exp:'no'},
   dates:['2026-10-12','2026-10-13'],
   cards:new Set(['pdebit']), useOta:true, ota:{},
-  bulk:{pct:40, min:100}, tab:'cards'
+  bulk:{pct:40, min:100}, tab:'cards', focus:null
 };
 
 const money = v => 'S$' + (Math.round(v*100)/100).toFixed(2).replace(/\.00$/,'');
@@ -294,6 +294,32 @@ function itemRow(it, who, p){
 }
 function whoLabel(p, i){ return `${p.res==='local'?'本地':'游客'}·${AGES[p.age].split(' ')[0]} #${i+1}`; }
 
+// 一个组合的卡片：分天行程、每个渠道买几张、去购买链接、展开看每人明细
+function comboCard(r, isBest, isHead){
+  const plan = r.x.plan, key = r.x.parks.join('+');
+  const route = plan.schedule.map(d=>`<b>${dayLabel(d.day)}</b> ${d.parks.map(x=>PK[x].name).join(' + ')}`).join('<span class="arrow">→</span>');
+  const orders = new Map();
+  plan.per.forEach((pr,pi)=>pr.days.forEach(items=>items.forEach(it=>{
+    const b = buyInfo(it, plan.payers[pi]);
+    if (!orders.has(b.key)) orders.set(b.key, {...b, n:0, total:0, passes:new Set()});
+    const o = orders.get(b.key); o.n++; o.total += it.price;
+    if (it.type==='pass') o.passes.add(`${BUNDLES[it.pass].name}：${it.parks.map(x=>PK[x].name).join(' + ')}${BUNDLES[it.pass].oneDay?'（须同一天）':''}`);
+  })));
+  const why = r.off - plan.total > 0.009 ? `比同样行程全部官网单买（${money(r.off)}）省 ${money(r.off-plan.total)}` : '和官网单买同价';
+  return `<div class="combo${isBest?' is-best':''}${isHead?' is-head':''}">
+    <div class="combo-head">
+      <div class="combo-name">${r.x.parks.map(x=>PK[x].name).join(' + ')}${isBest?'<span class="tag-best">每园最划算</span>':''}${isHead?'<span class="tag-head">当前方案</span>':''}</div>
+      <div class="combo-nums"><span><b>${money(plan.total)}</b> 总价</span><span>${r.extra>0.009?'+'+money(r.extra):'最低'}</span><span>${money(r.avg)} / 人 / 园</span></div>
+    </div>
+    <div class="route">${route}</div>
+    <div class="why">${why}。</div>
+    <ul class="buy-list">${[...orders.values()].map(o=>`<li><span>${o.name} · ${o.n} 张 · ${money(o.total)}${[...o.passes].map(t=>`<small>${t}</small>`).join('')}</span><a class="buy" href="${o.url}" target="_blank" rel="noopener">去购买 ↗</a></li>`).join('')}</ul>
+    <div class="combo-actions">
+      <details><summary>每人每天怎么买</summary>${planBlock(plan)}</details>
+      ${isHead ? '' : `<button type="button" data-focus="${key}">设为当前方案，看下单清单</button>`}
+    </div>
+  </div>`;
+}
 function planBlock(plan){
   return plan.schedule.map((d,di)=>{
     const rows = plan.per.map((r,pi)=> r.days[di].map(it=>itemRow(it, whoLabel(plan.payers[pi], pi), plan.payers[pi])).join('')).join('');
@@ -346,7 +372,9 @@ function render(){
   if (!combos.length){ el.innerHTML = '<div class="panel warn">天数不够：每天最多 2 个白天园 + 夜间动物园，请再加一天。</div>' + channelsTable(); return; }
   combos.sort((a,b)=>a.parks.length-b.parks.length || a.plan.total-b.plan.total);
 
-  const head = combos[0];
+  const cheapest = combos[0];
+  const head = combos.find(x=>x.parks.join('+')===state.focus) || cheapest;
+  const focused = head!==cheapest;
   const offTotal = officialSingles(head.plan, ctx);
   const usesPartner = head.plan.per.some(r=>r.days.flat().some(it=>it.kind==='partner'));
   const usesEst = head.plan.per.some(r=>r.days.flat().some(it=>it.est));
@@ -358,14 +386,15 @@ function render(){
 
   const fallback = usesPartner ? groupCost(head.parks, {...ctx, cards:new Set([...state.cards].filter(id=>CARDS.find(c=>c.id===id).kind!=='partner'))}) : null;
 
-  const rows = combos.map(x=>({x, avg:x.plan.total/x.parks.length/x.plan.payers.length, extra:x.plan.total-head.plan.total}));
+  const rows = combos.map(x=>({x, avg:x.plan.total/x.parks.length/x.plan.payers.length, extra:x.plan.total-cheapest.plan.total, off:officialSingles(x.plan, ctx)}));
   const minAvg = Math.min(...rows.map(r=>r.avg));
   const span = ctx.days.length>1 ? `${dayLabel(ctx.days[0])} – ${dayLabel(ctx.days.at(-1))}` : dayLabel(ctx.days[0]);
 
   el.innerHTML = `
   <div class="best">
-    <div class="kicker">最低总价 · ${head.parks.map(x=>PK[x].name).join(' + ')} · ${state.people.length} 人 · ${span}</div>
-    <div class="total">${money(head.plan.total)} <small>共 ${head.plan.payers.length} 张付费</small></div>
+    ${focused ? `<div class="focus-bar">你正在看选中的组合，比最低总价多 ${money(head.plan.total-cheapest.plan.total)}。<button type="button" data-focus="">回到最低总价</button></div>` : ''}
+    <div class="kicker">${focused ? '你选的组合' : '最低总价'} · ${head.parks.map(x=>PK[x].name).join(' + ')} · ${state.people.length} 人 · ${span}</div>
+    <div class="total">${money(head.plan.total)} <small>${head.plan.payers.length} 人付费</small></div>
     <div class="cmp">同样日期全部在官网单买要 ${money(offTotal)}，${offTotal-head.plan.total>0.009 ? `省下 <b>${money(offTotal-head.plan.total)}</b>` : '已是官网价'}。</div>
     ${planBlock(head.plan)}
     ${usesEst ? '<p class="hint">≈估 = OTA 估算价。下单前在 Klook / Trip.com 里核对；若实价更高，在左侧改价后会自动换回其他渠道。</p>' : ''}
@@ -377,12 +406,9 @@ function render(){
   ${whatIf.length ? `<div class="panel"><h2>换个渠道还能更便宜</h2><ul class="whatif">${whatIf.map(w=>`<li>${w.c.kind==='sia' ? `如果${w.c.holder}，用 <b>${w.c.name}</b>` : `如果你（或同行的本地朋友）有 <b>${w.c.name}</b>`}，同样行程再省 <b>${money(w.save)}</b>。</li>`).join('')}</ul>
     <p class="hint">合作门户买的是游客标准价票打折，无身份限制，持卡人一次付款即可帮朋友买。</p></div>` : ''}
 
-  ${combos.length>1 ? `<div class="panel"><h2>多去几个园要加多少钱</h2>
-  <div class="tbl"><table><thead><tr><th>组合</th><th class="num">总价</th><th class="num">比最低多</th><th class="num">每人每园</th></tr></thead><tbody>
-  ${rows.map(r=>`<tr><td>${r.x.parks.map(x=>PK[x].name).join(' + ')}${Math.abs(r.avg-minAvg)<0.01?'<span class="tag-best">每园最划算</span>':''}<br><small style="color:var(--muted)">${r.x.plan.schedule.map(d=>dayLabel(d.day).split(' ')[0]).join('、')} · ${[...new Set(r.x.plan.per.flatMap(p=>p.days.flat()).map(it=>it.type==='pass'?BUNDLES[it.pass].name:it.kind==='partner'?'合作折扣':it.kind==='sia'?'新航专享':it.kind==='ota'?'OTA':'官网单票'))].join(' / ')}</small></td>
-    <td class="num">${money(r.x.plan.total)}</td><td class="num">${r.extra>0.009?'+'+money(r.extra):'—'}</td><td class="num">${money(r.avg)}</td></tr>`).join('')}
-  </tbody></table></div>
-  <p class="hint">“随意”的园全部排列组合。点上面“必去”可把某个组合锁定为主方案，看它的分天安排。</p></div>` : ''}
+  ${combos.length>1 ? `<div class="panel" id="combos"><h2>多去几个园要加多少钱</h2>
+  <p class="hint">每人每园 = 总价 ÷ 人数 ÷ 园数。「每园最划算」只说明平均到每个园最便宜，不代表总价最低；园越多总价越高。</p>
+  <div class="combo-list">${rows.map(r=>comboCard(r, Math.abs(r.avg-minAvg)<0.01, r.x===head)).join('')}</div></div>` : ''}
 
   ${channelsTable()}
   `;
@@ -409,6 +435,7 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('click', e=>{
   const t = e.target.closest('button'); if (!t || !DATA) return;
+  if (t.dataset.focus!==undefined){ state.focus = t.dataset.focus || null; render(); document.querySelector('.best')?.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   if (t.dataset.tab){ state.tab = t.dataset.tab; renderCards(); return; }
   if (t.dataset.park){ state.pref[t.dataset.park] = t.dataset.v; renderParks(); render(); }
   else if (t.dataset.del){ state.people.splice(+t.dataset.del,1); renderPeople(); render(); }
