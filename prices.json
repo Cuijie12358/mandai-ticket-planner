@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-19",
+  "updatedAt": "2026-10-26",
   "currency": "SGD, 含 9% GST",
   "parks": [
     {
@@ -317,8 +317,8 @@
       "oneDay": true,
       "max": 2,
       "parks": "all",
-      "a": 88,
-      "c": 60
+      "a": 98,
+      "c": 70
     },
     "d6one": {
       "name": "6 园 1 日 Destination Pass",
@@ -327,8 +327,8 @@
       "oneDay": true,
       "max": 6,
       "parks": "all",
-      "a": 118,
-      "c": 90
+      "a": 128,
+      "c": 100
     },
     "d6five": {
       "name": "6 园 5 日 Destination Pass",
@@ -337,8 +337,8 @@
       "oneDay": false,
       "max": 6,
       "parks": "all",
-      "a": 158,
-      "c": 110
+      "a": 168,
+      "c": 120
     },
     "d6fiveSia": {
       "name": "6 园 5 日 Destination Pass（新航专享）",
@@ -348,8 +348,8 @@
       "oneDay": false,
       "max": 6,
       "parks": "all",
-      "a": 148,
-      "c": 105,
+      "a": 158,
+      "c": 115,
       "from": "2026-01-01",
       "to": "2027-03-31"
     },
@@ -616,7 +616,7 @@
         ]
       ],
       "who": "所有人，同价",
-      "terms": "2 园 1 日 S$88/60；6 园 1 日 S$118/90；6 园 5 日 S$158/110（含雨林）。Pelago 也可用 KrisFlyer 里程兑换。"
+      "terms": "2 园 1 日 S$98/70；6 园 1 日 S$128/100；6 园 5 日 S$168/120（含雨林）。Pelago 也可用 KrisFlyer 里程兑换。"
     },
     {
       "links": [
